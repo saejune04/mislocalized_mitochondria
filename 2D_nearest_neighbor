@@ -1,0 +1,150 @@
+
+import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import math
+import csv
+from tkinter import Tk
+from tkinter import filedialog
+from tkinter.filedialog import askopenfilename
+
+#to-do
+#1. add ability to choose output file location (DONE)
+#2. restrain the analyze particles function in imageJ
+
+
+
+#2D pythagorean thereom to calculate difference
+averages = []
+mislocalized_indexes = []
+def pythag(x1, y1, x2, y2):
+    #return (math.sqrt((int(x1)-int(x2))**2+(int(y1)-int(y2))**2+(int(z1)-int(z2))**2))
+    return (math.sqrt((float(x1)-float(x2))**2+(float(y1)-float(y2))**2))
+#print(pythag(2.5,3.2,6.2,9.6,3.5,9.7))
+#testing: should equal 7.921489.....
+#print(pythag(0,0,3,4))
+#Finds the n smallest numbers in a list (doesn't count 0)
+def smalln(n, list):
+    values = []
+    min_locations = []
+    for i in range(0, n):
+        min = 999999999
+        for j in range(len(list)):
+            if list[j] < min and list[j]!=0:
+                min = list[j]
+        values.append(min)
+        min_locations.append(list.index(min))
+        list[list.index(min)]=0
+    sum=0
+    for i in range(len(values)):
+        sum+=values[i]
+    average = sum/n
+    averages.append(average)
+    print("Nearest neighbors at indexes ")
+    print(', '.join(map(str, min_locations)))
+    print("with values of")
+    print(', '.join(map(str, values)))
+    print("and average of")
+    print(average)
+
+#Input data parsing for .csv file
+#file = open("C:\\Users\jungs\Documents\objectfinder-stress2\objects\pos.txt", "r")
+#print(pythag(1,2,3,4,5,6))
+#file = open("C:\\Users\jungs\Downloads\Locations - imageJ.csv")
+
+Tk().withdraw() 
+fileName = askopenfilename() 
+file = open(fileName)
+
+csv_reader = csv.reader(file, delimiter=',')
+line_count = 0
+locations = []
+for row in csv_reader:
+    if line_count == 0:
+        line_count+=1
+    else:
+        locations.append(row)
+        line_count+=1
+
+print(locations)
+#lines = file.readlines()
+#for i in range(len(lines)):
+#    line = lines[i].strip().split(' ')
+#    if len(line) > 1:
+#        locations.append(line)
+#print(locations)
+
+#Find nearest neighbor for each location
+for i in range(len(locations)):
+    distances=[]
+    #Finds distance between the point at location i to all other points
+    for j in range(len(locations)):
+        if (locations[i][4] == locations[j][4]):
+            distances.append(pythag(locations[i][2], locations[i][3], locations[j][2], locations[j][3]))
+
+    #for k in range(len(distances)):
+    print("Index " + str(i))
+    print("Location: (" + locations[i][2] + ", " + locations[i][3] + ")")
+    #print(distances)
+    smalln(3, distances)
+    print()
+for i in range(len(averages)):
+    if averages[i] >= 10:
+        mislocalized_indexes.append(i)
+        print("index " + str(i) + " with average of " + str(averages[i]) + " and location of " + str(locations[i]))
+
+print()
+print("mislocalized locations:")
+
+
+#-----------------------------------------------------------------------------------------------------------
+#Creating output location file
+
+outputpath = filedialog.asksaveasfile()
+
+print(outputpath)
+output_file = outputpath 
+for i in range(len(mislocalized_indexes)):
+    print(locations[mislocalized_indexes[i]])
+
+for element in mislocalized_indexes:
+    output_file.write(str(element) + "\n")
+
+output_file.close()
+#-----------------------------------------------------------------------------------------------------------
+#making arrays for scatterplot
+colors = []
+mislocalized_x = []
+mislocalized_y = []
+normal_x = []
+normal_y = []
+x = []
+y = []
+#for i in range(len(mislocalized_indexes)):
+ #   mislocalized_x.append(locations[mislocalized_indexes[i]][0])
+  #  mislocalized_y.append(locations[mislocalized_indexes[i]][1])
+#print("mis_x: " + str(mislocalized_x))
+#print("mis_y: " + str(mislocalized_y))
+for i in range(len(locations)):
+    x.append(float(locations[i][0]))
+    y.append(float(locations[i][1]))
+    if not(i in mislocalized_indexes):
+        colors.append((0,0,1))
+        #normal_x.append(locations[i][0])
+        #normal_y.append(locations[i][0])
+    else:
+        colors.append((1,0,0))
+#(str(x))   
+#print(str(y))
+#print("normal_x: " + str(normal_x))
+#print("normal_y: " + str(normal_y))
+
+#Scatterplot
+#plt.scatter(x, y, c = colors, alpha = 0.5)
+#plt.show()
+
+
+#histogram
+plt.hist(averages, bins = 50)
+plt.show()
+

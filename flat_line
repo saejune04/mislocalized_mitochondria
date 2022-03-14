@@ -1,0 +1,111 @@
+
+import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import math
+import csv
+from tkinter import Tk
+from tkinter import filedialog
+from tkinter.filedialog import askopenfilename
+
+#to-do
+
+
+
+#Input data parsing for .csv file
+#file = open("C:\\Users\jungs\Documents\objectfinder-stress2\objects\pos.txt", "r")
+#print(pythag(1,2,3,4,5,6))
+#file = open("C:\\Users\jungs\Downloads\Locations - imageJ.csv")
+
+Tk().withdraw() 
+fileName = askopenfilename()
+file = open(fileName)
+
+csv_reader = csv.reader(file, delimiter=',')
+line_count = 0
+locations = []
+for row in csv_reader:
+    if line_count == 0:
+        line_count+=1
+    else:
+        locations.append(row)
+        line_count+=1
+
+print(locations)
+#-----------------------------------------------------------------------------------------------------------
+#Finding mean Y position
+sumY = 0.0
+for i in range(len(locations)):
+    sumY += float(locations[i][4])
+meanY = sumY/line_count
+
+#Finding standard deviation
+sumSD = 0.0
+for i in range(len(locations)):
+    sumSD += (float(locations[i][4])-meanY)**2
+
+SD = math.sqrt(sumSD/line_count)
+print("Standard deviation: " + str(SD))
+
+#Finding mitochondria not within 2.5 standard deviations
+distances = []
+mislocalized_indexes = []
+for i in range(len(locations)):
+    SDfactor = abs(float(locations[i][4]) - meanY)
+    if (SDfactor >= 2.5 * SD):
+        distances.append(SDfactor)
+        mislocalized_indexes.append(i)
+        print("index " + str(i) + " is " + str(SDfactor) + "standard deviations away from the mean and has a location of " + str(locations[i]))
+
+#-----------------------------------------------------------------------------------------------------------
+#Creating output location file
+
+outputpath = filedialog.asksaveasfile()
+
+print(outputpath)
+output_file = outputpath 
+for i in range(len(mislocalized_indexes)):
+    print(locations[mislocalized_indexes[i]])
+
+for element in mislocalized_indexes:
+    output_file.write(str(element) + "\n")
+
+output_file.close()
+#-----------------------------------------------------------------------------------------------------------
+#making arrays for scatterplot
+colors = []
+mislocalized_x = []
+mislocalized_y = []
+normal_x = []
+normal_y = []
+x = []
+y = []
+#for i in range(len(mislocalized_indexes)):
+ #   mislocalized_x.append(locations[mislocalized_indexes[i]][0])
+  #  mislocalized_y.append(locations[mislocalized_indexes[i]][1])
+#print("mis_x: " + str(mislocalized_x))
+#print("mis_y: " + str(mislocalized_y))
+for i in range(len(locations)):
+    x.append(float(locations[i][0]))
+    y.append(float(locations[i][1]))
+    if not(i in mislocalized_indexes):
+        colors.append((0,0,1))
+        #normal_x.append(locations[i][0])
+        #normal_y.append(locations[i][0])
+    else:
+        colors.append((1,0,0))
+#(str(x))   
+#print(str(y))
+#print("normal_x: " + str(normal_x))
+#print("normal_y: " + str(normal_y))
+
+#Scatterplot
+#plt.scatter(x, y, c = colors, alpha = 0.5)
+#plt.show()
+
+
+#histogram
+plt.hist(distances, bins = 50)
+plt.show()
+
+

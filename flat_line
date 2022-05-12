@@ -7,7 +7,8 @@ import csv
 from tkinter import Tk
 from tkinter import filedialog
 from tkinter.filedialog import askopenfilename
-
+#notes
+#0.0625 for the minimum area in imageJ
 #to-do
 
 
@@ -32,32 +33,46 @@ for row in csv_reader:
         line_count+=1
 
 print(locations)
-#-----------------------------------------------------------------------------------------------------------
+#------------------------Finding mislocalized mitochondria------------------------------------
+#This assumes that there are 90 slices.
 #Finding mean Y position
-sumY = 0.0
-for i in range(len(locations)):
-    sumY += float(locations[i][3])
-meanY = sumY/line_count
-print("Mean: " + str(meanY))
-#Finding standard deviation
-sumSD = 0.0
-for i in range(len(locations)):
-    sumSD += (float(locations[i][3])-meanY)**2
 
-SD = math.sqrt(sumSD/line_count)
-print("Standard deviation: " + str(SD))
+#TO DO - GET THE SD WITHIN EACH SLICE NOT THE ENTIRE THING
 
-#Finding mitochondria not within 2.5 standard deviations
 #distances list is only used for the histogram at the end
 distances = []
 mislocalized_indexes = []
-for i in range(len(locations)):
-    SDfactor = abs(float(locations[i][3]) - meanY)
-    distances.append(SDfactor/SD)
 
-    if (SDfactor >= 2.5 * SD):
-        mislocalized_indexes.append(i)
-        print("index " + str(i) + " is " + str(SDfactor/SD) + " standard deviations away from the mean and has a location of " + str(locations[i]))
+for slices in range(1,91):
+    sumY = 0.0
+    sliceCount = 0
+    for i in range(len(locations)):
+        if (int(locations[i][4]) == slices):
+            sliceCount += 1
+            sumY += float(locations[i][3])
+            #print ("item found in slices " + str(slices))
+    if (sliceCount != 0):
+        meanY = sumY/sliceCount
+        print("Mean of slice " + str(slices) + ": " + str(meanY))
+        #Finding standard deviation
+        sumSD = 0.0
+        for i in range(len(locations)):
+            if (int(locations[i][4]) == slices):
+                sumSD += (float(locations[i][3]) - meanY)**2
+
+        SD = math.sqrt(sumSD/sliceCount)
+        print("Standard deviation of slice " + str(slices) + ": "  + str(SD))
+
+    #Finding mitochondria not within 2.5 standard deviations
+
+        for i in range(len(locations)):
+            if (int(locations[i][4]) == slices):
+                SDfactor = abs(float(locations[i][3]) - meanY)
+                distances.append(SDfactor/SD)
+
+                if (SDfactor >= 1.5 * SD):
+                    mislocalized_indexes.append(i)
+                    print("index " + str(i) + " is " + str(SDfactor/SD) + " standard deviations away from the mean and has a location of " + str(locations[i]))
 
 #-----------------------------------------------------------------------------------------------------------
 #Creating output location file
@@ -70,8 +85,7 @@ for i in range(len(mislocalized_indexes)):
     print(locations[mislocalized_indexes[i]])
 
 for element in mislocalized_indexes:
-    output_file.write(str(locations[element]) + "\n")
-
+    output_file.write(str(element) + "\n")
 output_file.close()
 #-----------------------------------------------------------------------------------------------------------
 #histogram
